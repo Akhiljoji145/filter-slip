@@ -35,6 +35,44 @@ def get_unique_names(booth_no):
     conn.close()
     return names
 
+def get_unique_house_names_both():
+    # Get unique house names from both databases
+    conn1 = sqlite3.connect('voters_1.db')
+    cursor1 = conn1.cursor()
+    cursor1.execute("SELECT DISTINCT house_name FROM voters ORDER BY house_name")
+    names1 = [row[0] for row in cursor1.fetchall()]
+    conn1.close()
+
+    conn2 = sqlite3.connect('voters.db')
+    cursor2 = conn2.cursor()
+    cursor2.execute("SELECT DISTINCT house_name FROM voters ORDER BY house_name")
+    names2 = [row[0] for row in cursor2.fetchall()]
+    conn2.close()
+
+    # Combine and remove duplicates
+    all_names = list(set(names1 + names2))
+    all_names.sort()
+    return all_names
+
+def get_unique_house_nos_both():
+    # Get unique house nos from both databases
+    conn1 = sqlite3.connect('voters_1.db')
+    cursor1 = conn1.cursor()
+    cursor1.execute("SELECT DISTINCT house_no FROM voters ORDER BY house_no")
+    nos1 = [row[0] for row in cursor1.fetchall()]
+    conn1.close()
+
+    conn2 = sqlite3.connect('voters.db')
+    cursor2 = conn2.cursor()
+    cursor2.execute("SELECT DISTINCT house_no FROM voters ORDER BY house_no")
+    nos2 = [row[0] for row in cursor2.fetchall()]
+    conn2.close()
+
+    # Combine and remove duplicates
+    all_nos = list(set(nos1 + nos2))
+    all_nos.sort()
+    return all_nos
+
 def get_voters_by_house_name(house_name, booth_no):
     db_name = get_db_name(booth_no)
     conn = sqlite3.connect(db_name)
@@ -88,7 +126,7 @@ def get_details():
     house_name = request.form.get('house_name')
     house_no = request.form.get('house_no')
     name = request.form.get('name')
-    
+
     if house_name:
         groups = get_voters_by_house_name(house_name, booth_no)
         return render_template('details.html', house_name=house_name, groups=groups, booth_no=booth_no)
@@ -100,6 +138,59 @@ def get_details():
         return render_template('details.html', name=name, voters=voters, booth_no=booth_no)
     else:
         return "No valid filter selected", 400
+
+@app.route('/comparison')
+def comparison():
+    house_names = get_unique_house_names_both()
+    house_nos = get_unique_house_nos_both()
+    return render_template('comparison.html', house_names=house_names, house_nos=house_nos)
+
+@app.route('/compare_results', methods=['POST'])
+def compare_results():
+    comparison_type = request.form.get('comparison_type')
+    value = request.form.get('value')
+
+    if not comparison_type or not value:
+        return "Invalid comparison parameters", 400
+
+    # Fetch from both DBs
+    if comparison_type == 'house_name':
+        conn1 = sqlite3.connect('voters_1.db')
+        cursor1 = conn1.cursor()
+        cursor1.execute("SELECT * FROM voters WHERE house_name = ?", (value,))
+        voters1 = cursor1.fetchall()
+        conn1.close()
+
+        conn2 = sqlite3.connect('voters.db')
+        cursor2 = conn2.cursor()
+        cursor2.execute("SELECT * FROM voters WHERE house_name = ?", (value,))
+        voters2 = cursor2.fetchall()
+        conn2.close()
+    elif comparison_type == 'house_no':
+        conn1 = sqlite3.connect('voters_1.db')
+        cursor1 = conn1.cursor()
+        cursor1.execute("SELECT * FROM voters WHERE house_no = ?", (value,))
+        voters1 = cursor1.fetchall()
+        conn1.close()
+
+        conn2 = sqlite3.connect('voters.db')
+        cursor2 = conn2.cursor()
+        cursor2.execute("SELECT * FROM voters WHERE house_no = ?", (value,))
+        voters2 = cursor2.fetchall()
+        conn2.close()
+    else:
+        return "Invalid comparison type", 400
+
+    # Convert to sets of tuples for comparison
+    set1 = set(tuple(v) for v in voters1)
+    set2 = set(tuple(v) for v in voters2)
+
+    common = set1 & set2
+    unique1 = set1 - set2
+    unique2 = set2 - set1
+
+    return render_template('compare_results.html', comparison_type=comparison_type, value=value,
+                           voters1=voters1, voters2=voters2, common=list(common), unique1=list(unique1), unique2=list(unique2))
 
 if __name__ == '__main__':
     app.run(debug=True)
