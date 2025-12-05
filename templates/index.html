@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voters App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="container mx-auto p-4 bg-gray-50 min-h-screen">
+    <h1 class="text-2xl font-bold mb-6 text-center sm:text-left">Voters App</h1>
+    {% if not booth_no %}
+    <form action="/select_booth" method="post" class="mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center mb-4">
+            <label for="booth_no" class="mb-2 sm:mb-0 sm:mr-4 font-medium">Booth No:</label>
+            <select name="booth_no" id="booth_no" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="1">1</option>
+                <option value="2">2</option>
+            </select>
+        </div>
+        <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">Select Booth</button>
+    </form>
+    {% else %}
+    <form action="/get_details" method="post" class="mb-6">
+        <input type="hidden" name="booth_no" value="{{ booth_no }}">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <div class="flex flex-col">
+                <label for="booth_no" class="mb-2 font-medium">Booth No:</label>
+                <select name="booth_no" id="booth_no" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="1" {% if booth_no == '1' %}selected{% endif %}>1</option>
+                    <option value="2" {% if booth_no == '2' %}selected{% endif %}>2</option>
+                </select>
+            </div>
+            <div class="flex flex-col">
+                <label for="house_name" class="mb-2 font-medium">House Name:</label>
+                <select name="house_name" id="house_name" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">-- Select House Name --</option>
+                    {% for name in house_names %}
+                    <option value="{{ name }}">{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="flex flex-col">
+                <label for="house_no" class="mb-2 font-medium">House No:</label>
+                <select name="house_no" id="house_no" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">-- Select House No --</option>
+                    {% for no in house_nos %}
+                    <option value="{{ no }}">{{ no }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="flex flex-col">
+                <label for="name" class="mb-2 font-medium">Name:</label>
+                <select name="name" id="name" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">-- Select Name --</option>
+                    {% for n in names %}
+                    <option value="{{ n }}">{{ n }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">Get Details</button>
+    </form>
+    {% endif %}
+    {% if session.get('selections') %}
+    <h2 class="text-xl font-semibold mb-4">Selection Queue</h2>
+    <ul class="list-disc list-inside bg-white p-4 rounded-md shadow">
+        {% for sel in session['selections'] %}
+        <li class="mb-2">Booth {{ sel.booth_no }} - {{ sel.filter }}: {{ sel.value }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+</body>
