@@ -7,83 +7,119 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="p-6 bg-gray-50">
-  <div class="max-w-5xl mx-auto bg-white p-6 rounded shadow">
-    <h1 class="text-xl font-bold mb-4">Compare Results</h1>
+  <div class="max-w-7xl mx-auto bg-white p-6 rounded shadow">
+    <h1 class="text-2xl font-bold mb-6">Compare Results</h1>
 
-    <p class="mb-4">Type: <strong>{{ comparison_type }}</strong> — Value: <strong>{{ value }}</strong></p>
+    <p class="mb-6 text-lg">Type: <strong>{{ comparison_type }}</strong> — Value: <strong>{{ value }}</strong></p>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div>
-        <h2 class="font-semibold mb-2">Database 1 (voters_1.db)</h2>
+    <!-- Summary -->
+    <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded">
+      <h3 class="text-lg font-semibold mb-2">Summary</h3>
+      <p>Common entries: <strong>{{ common|length }}</strong></p>
+      <p>Unique to Database 1: <strong>{{ unique1|length }}</strong></p>
+      <p>Unique to Database 2: <strong>{{ unique2|length }}</strong></p>
+    </div>
+
+    <!-- Vertical layout -->
+    <div class="space-y-6">
+
+      <!-- Database 1 -->
+      <div class="flex-1 overflow-auto max-h-[600px]">
+        <h2 class="font-semibold mb-2 text-blue-700">Booth 1</h2>
         {% if voters1 %}
-          <ul class="list-disc pl-5">
-            {% for v in voters1 %}
-              <li><pre class="whitespace-pre-wrap text-sm">{{ v }}</pre></li>
-            {% endfor %}
-          </ul>
+        <div class="overflow-x-auto">
+          <table class="min-w-full border-collapse border border-gray-300 text-sm shadow-sm rounded-lg overflow-hidden">
+            <thead class="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+              <tr>
+                {% for header in headers %}
+                  <th class="border border-gray-300 px-4 py-3 text-left font-semibold">{{ header }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              {% for row in voters1 %}
+                <tr class="hover:bg-blue-50 transition-colors duration-200">
+                  {% for cell in row %}
+                    <td class="border border-gray-300 px-4 py-3">{{ cell }}</td>
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
         {% else %}
-          <p class="text-sm text-gray-500">No rows</p>
+          <p class="text-sm text-gray-500 mt-2">No rows</p>
         {% endif %}
       </div>
 
-      <div>
-        <h2 class="font-semibold mb-2">Database 2 (voters.db)</h2>
+      <!-- Database 2 -->
+      <div class="flex-1 overflow-auto max-h-[600px]">
+        <h2 class="font-semibold mb-2 text-green-700">Booth 2</h2>
         {% if voters2 %}
-          <ul class="list-disc pl-5">
-            {% for v in voters2 %}
-              <li><pre class="whitespace-pre-wrap text-sm">{{ v }}</pre></li>
-            {% endfor %}
-          </ul>
+        <div class="overflow-x-auto">
+          <table class="min-w-full border-collapse border border-gray-300 text-sm shadow-sm rounded-lg overflow-hidden">
+            <thead class="bg-gradient-to-r from-green-500 to-green-600 text-white">
+              <tr>
+                {% for header in headers %}
+                  <th class="border border-gray-300 px-4 py-3 text-left font-semibold">{{ header }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              {% for row in voters2 %}
+                <tr class="hover:bg-green-50 transition-colors duration-200">
+                  {% for cell in row %}
+                    <td class="border border-gray-300 px-4 py-3">{{ cell }}</td>
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
         {% else %}
-          <p class="text-sm text-gray-500">No rows</p>
+          <p class="text-sm text-gray-500 mt-2">No rows</p>
         {% endif %}
       </div>
 
-      <div>
-        <h2 class="font-semibold mb-2">Common / Unique</h2>
-        <div class="mb-2">
+      <!-- Comparison -->
+      <div class="flex-1 overflow-auto max-h-[600px]">
+        <h2 class="font-semibold mb-2 text-purple-700">Comparison</h2>
+
+        <!-- Common -->
+        <div class="mb-4">
           <strong>Common (both):</strong>
           {% if common %}
-            <ul class="list-disc pl-5">
-              {% for r in common %}
-                <li><pre class="whitespace-pre-wrap text-sm">{{ r }}</pre></li>
-              {% endfor %}
-            </ul>
+          <div class="overflow-x-auto mt-1">
+            <table class="min-w-full border-collapse border border-gray-300 text-sm shadow-sm rounded-lg overflow-hidden">
+              <thead class="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+                <tr>
+                  {% for header in headers %}
+                    <th class="border border-gray-300 px-4 py-3 text-left font-semibold">{{ header }}</th>
+                  {% endfor %}
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                {% for row in common %}
+                  <tr class="hover:bg-blue-50 transition-colors duration-200">
+                    {% for cell in row %}
+                      <td class="border border-gray-300 px-4 py-3">{{ cell }}</td>
+                    {% endfor %}
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
           {% else %}
-            <p class="text-sm text-gray-500">None</p>
+            <p class="text-sm text-gray-500 mt-1">None</p>
           {% endif %}
         </div>
 
-        <div class="mb-2">
-          <strong>Unique to DB1:</strong>
-          {% if unique1 %}
-            <ul class="list-disc pl-5">
-              {% for r in unique1 %}
-                <li><pre class="whitespace-pre-wrap text-sm">{{ r }}</pre></li>
-              {% endfor %}
-            </ul>
-          {% else %}
-            <p class="text-sm text-gray-500">None</p>
-          {% endif %}
-        </div>
-
-        <div>
-          <strong>Unique to DB2:</strong>
-          {% if unique2 %}
-            <ul class="list-disc pl-5">
-              {% for r in unique2 %}
-                <li><pre class="whitespace-pre-wrap text-sm">{{ r }}</pre></li>
-              {% endfor %}
-            </ul>
-          {% else %}
-            <p class="text-sm text-gray-500">None</p>
-          {% endif %}
-        </div>
+        
       </div>
     </div>
 
-    <div class="mt-4">
-      <a href="{{ url_for('index') }}" class="text-blue-600">Back</a>
+    <div class="mt-6">
+      <a href="{{ url_for('index') }}" class="text-blue-600 hover:underline">Back</a>
     </div>
   </div>
 </body>

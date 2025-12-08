@@ -325,10 +325,12 @@ def compare_results():
     unique1 = list(set1 - set2)
     unique2 = list(set2 - set1)
 
+    headers = ["Serial", "Name", "Guardian Name", "House No", "House Name", "Gender", "Age", "Voter ID"]
     return render_template("compare_results.html",
                            comparison_type=comparison_type, value=value,
                            voters1=voters1, voters2=voters2,
-                           common=common, unique1=unique1, unique2=unique2)
+                           common=common, unique1=unique1, unique2=unique2,
+                           headers=headers)
 
 
 @app.route("/details", methods=["POST"])
