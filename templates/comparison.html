@@ -6,74 +6,100 @@
     <title>Compare Databases</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body class="container mx-auto p-4 bg-gray-50 min-h-screen">
+
     <h1 class="text-2xl font-bold mb-6 text-center sm:text-left">Compare Databases</h1>
+
     <div class="mb-4">
-        <a href="/" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">Back to Home</a>
+        <a href="/" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Back to Home</a>
     </div>
+
     <form action="/compare_results" method="post" class="mb-6">
+
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+
             <div class="flex flex-col">
-                <label for="comparison_type" class="mb-2 font-medium">Comparison Type:</label>
-                <select name="comparison_type" id="comparison_type" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label class="mb-2 font-medium">Comparison Type:</label>
+                <select name="comparison_type" id="comparison_type"
+                    class="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
                     <option value="house_name">House Name</option>
                     <option value="house_no">House No</option>
+                    <option value="name">Name</option>
                 </select>
             </div>
+
             <div class="flex flex-col">
-                <label for="value" class="mb-2 font-medium">Value (English phonetic):</label>
-                <input type="text" name="value" id="value" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Type value in English..." autocomplete="off">
-                <div id="value_suggestions" class="mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-y-auto hidden"></div>
+                <label class="mb-2 font-medium">Value (English phonetic):</label>
+                <input type="text" name="value" id="value"
+                    class="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                    placeholder="Type value in English..." autocomplete="off">
+
+                <div id="value_suggestions"
+                    class="mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-y-auto hidden">
+                </div>
             </div>
+
         </div>
-        <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">Compare</button>
+
+        <button type="submit"
+            class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
+            Compare
+        </button>
+
     </form>
 
-    <script>
-        const comparisonTypeSelect = document.getElementById('comparison_type');
-        const valueInput = document.getElementById('value');
-        const valueSuggestionsDiv = document.getElementById('value_suggestions');
 
-        valueInput.addEventListener('input', function() {
-            const query = this.value.trim();
-            const searchType = comparisonTypeSelect.value;
-            if (query.length < 2) {
-                valueSuggestionsDiv.classList.add('hidden');
-                return;
-            }
+<script>
+    const comparisonTypeSelect = document.getElementById('comparison_type');
+    const valueInput = document.getElementById('value');
+    const suggestionsDiv = document.getElementById('value_suggestions');
 
-            fetch(`/api/search_suggestions?q=${encodeURIComponent(query)}&type=${searchType}`)
-                .then(response => response.json())
-                .then(suggestions => {
-                    valueSuggestionsDiv.innerHTML = '';
-                    if (suggestions.length > 0) {
-                        suggestions.forEach(suggestion => {
-                            const div = document.createElement('div');
-                            div.className = 'px-3 py-2 hover:bg-gray-100 cursor-pointer';
-                            div.textContent = suggestion;
-                            div.addEventListener('click', function() {
-                                valueInput.value = suggestion;
-                                valueSuggestionsDiv.classList.add('hidden');
-                            });
-                            valueSuggestionsDiv.appendChild(div);
-                        });
-                        valueSuggestionsDiv.classList.remove('hidden');
-                    } else {
-                        valueSuggestionsDiv.classList.add('hidden');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching suggestions:', error);
-                    valueSuggestionsDiv.classList.add('hidden');
+    valueInput.addEventListener('input', function () {
+        const query = this.value.trim();
+        const type = comparisonTypeSelect.value;
+
+        if (query.length < 1) {
+            suggestionsDiv.classList.add('hidden');
+            return;
+        }
+
+        fetch(`/api/search_suggestions?q=${encodeURIComponent(query)}&type=${type}`)
+            .then(res => res.json())
+            .then(list => {
+                suggestionsDiv.innerHTML = "";
+
+                if (list.length === 0) {
+                    suggestionsDiv.classList.add("hidden");
+                    return;
+                }
+
+                list.forEach(item => {
+                    const div = document.createElement("div");
+                    div.className = "px-3 py-2 hover:bg-gray-100 cursor-pointer";
+                    div.textContent = item;
+
+                    div.addEventListener("click", () => {
+                        valueInput.value = item;
+                        suggestionsDiv.classList.add("hidden");
+                    });
+
+                    suggestionsDiv.appendChild(div);
                 });
-        });
 
-        // Hide suggestions when clicking outside
-        document.addEventListener('click', function(e) {
-            if (!valueInput.contains(e.target) && !valueSuggestionsDiv.contains(e.target)) {
-                valueSuggestionsDiv.classList.add('hidden');
-            }
-        });
-    </script>
+                suggestionsDiv.classList.remove("hidden");
+            })
+            .catch(() => suggestionsDiv.classList.add("hidden"));
+    });
+
+    document.addEventListener("click", (e) => {
+        if (!valueInput.contains(e.target) &&
+            !suggestionsDiv.contains(e.target)) {
+            suggestionsDiv.classList.add("hidden");
+        }
+    });
+
+</script>
+
 </body>
 </html>
