@@ -52,13 +52,9 @@
                 </select>
             </div>
             <div class="flex flex-col">
-                <label for="name" class="mb-2 font-medium">Name:</label>
-                <select name="name" id="name" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="">-- Select Name --</option>
-                    {% for n in names %}
-                    <option value="{{ n }}">{{ n }}</option>
-                    {% endfor %}
-                </select>
+                <label for="name" class="mb-2 font-medium">Name (English phonetic):</label>
+                <input type="text" name="name" id="name" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Type name in English..." autocomplete="off">
+                <div id="suggestions" class="mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-y-auto hidden"></div>
             </div>
         </div>
         <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">Get Details</button>

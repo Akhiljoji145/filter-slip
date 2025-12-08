@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify, session
 import sqlite3
 import os
+from indic_transliteration import sanscript
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'default-secret-key-change-in-production')
@@ -73,6 +74,25 @@ def get_unique_house_nos_both():
     all_nos.sort()
     return all_nos
 
+def get_unique_names_both():
+    # Get unique names from both databases
+    conn1 = sqlite3.connect('voters_1.db')
+    cursor1 = conn1.cursor()
+    cursor1.execute("SELECT DISTINCT name FROM voters ORDER BY name")
+    names1 = [row[0] for row in cursor1.fetchall()]
+    conn1.close()
+
+    conn2 = sqlite3.connect('voters.db')
+    cursor2 = conn2.cursor()
+    cursor2.execute("SELECT DISTINCT name FROM voters ORDER BY name")
+    names2 = [row[0] for row in cursor2.fetchall()]
+    conn2.close()
+
+    # Combine and remove duplicates
+    all_names = list(set(names1 + names2))
+    all_names.sort()
+    return all_names
+
 def get_voters_by_house_name(house_name, booth_no):
     db_name = get_db_name(booth_no)
     conn = sqlite3.connect(db_name)
@@ -107,9 +127,21 @@ def get_voters_by_name(name, booth_no):
     conn.close()
     return voters
 
+def get_voters_by_name_phonetic(malayalam_name, booth_no):
+    db_name = get_db_name(booth_no)
+    conn = sqlite3.connect(db_name)
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM voters WHERE name LIKE ?", (f'%{malayalam_name}%',))
+    voters = cursor.fetchall()
+    conn.close()
+    return voters
+
 @app.route('/')
 def index():
-    return render_template('index.html')
+    house_names = get_unique_house_names_both()
+    house_nos = get_unique_house_nos_both()
+    names = get_unique_names_both()
+    return render_template('index.html', house_names=house_names, house_nos=house_nos, names=names)
 
 @app.route('/select_booth', methods=['POST'])
 def select_booth():
@@ -134,7 +166,9 @@ def get_details():
         voters = get_voters_by_house_no(house_no, booth_no)
         return render_template('details.html', house_no=house_no, voters=voters, booth_no=booth_no)
     elif name:
-        voters = get_voters_by_name(name, booth_no)
+        # Transliterate English to Malayalam for phonetic search
+        malayalam_name = sanscript.transliterate(name, sanscript.ITRANS, sanscript.MALAYALAM)
+        voters = get_voters_by_name_phonetic(malayalam_name, booth_no)
         return render_template('details.html', name=name, voters=voters, booth_no=booth_no)
     else:
         return "No valid filter selected", 400
@@ -191,6 +225,31 @@ def compare_results():
 
     return render_template('compare_results.html', comparison_type=comparison_type, value=value,
                            voters1=voters1, voters2=voters2, common=list(common), unique1=list(unique1), unique2=list(unique2))
+
+@app.route('/api/search_suggestions')
+def search_suggestions():
+    query = request.args.get('q', '').strip()
+    search_type = request.args.get('type', 'name')  # default to name, but can be house_name or house_no
+    if not query:
+        return jsonify([])
+
+    # Transliterate English to Malayalam using roman scheme for better phonetic accuracy
+    malayalam_query = sanscript.transliterate(query, sanscript.roman, sanscript.MALAYALAM)
+
+    # Search in both databases
+    suggestions = set()
+
+    column = 'name' if search_type == 'name' else ('house_name' if search_type == 'house_name' else 'house_no')
+
+    for db_name in ['voters_1.db', 'voters.db']:
+        conn = sqlite3.connect(db_name)
+        cursor = conn.cursor()
+        cursor.execute(f"SELECT DISTINCT {column} FROM voters WHERE {column} LIKE ?", (f'%{malayalam_query}%',))
+        values = [row[0] for row in cursor.fetchall()]
+        suggestions.update(values)
+        conn.close()
+
+    return jsonify(list(suggestions))
 
 if __name__ == '__main__':
     app.run(debug=True)
